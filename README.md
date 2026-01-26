@@ -54,13 +54,24 @@ Using official City of Los Angeles geospatial datasets, the analysis identifies 
 #### Step 1: Zoning Filter  
 Zoning polygons were filtered to include **commercial and industrial categories only**, forming the initial constraint layer for the analysis.
 
+<p align="center">
+  <img src="figures/LA_commercial_zoning.png" alt="Commercial & Industrial Zoning — Los Angeles" width="500">
+</p>
+
 #### Step 2: Building Footprint Extraction  
 Building footprints were queried from the ArcGIS REST API using bounding boxes and pagination method to handle the large dataset. 
-The first bounding box encompasses the area of DTLA.    
-Future bounding boxes San Fernando Valley and Long Beach areas.   
+The first bounding box encompasses the area of DTLA, where we extract all building footprints intersecting this box.
+<p align="center">
+  <img src="figures/LA_bldg_full_test_bbox.png" alt="DTLA Building Footprints" width="500">
+</p>
+Next, extract data interseting bounding boxes for San Fernando Valley and Long Beach areas.   
 
 #### Step 3: Spatial Intersection  
 Building footprints were **spatially intersected with commercial/industrial zoning polygons**, retaining only buildings located within these zones.
+
+<p align="center">
+  <img src="figures/large_comm_ind_LA_bldg_full_test_bbox.png" alt="DTLA Industrial/Commercial Building Footprints" width="500">
+</p>
 
 #### Step 4: Size Threshold Filtering  
 To approximate rooftop solar feasibility, buildings were filtered by footprint area:
