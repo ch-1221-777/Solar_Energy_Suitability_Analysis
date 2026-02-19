@@ -51,44 +51,47 @@ Using official City of Los Angeles geospatial datasets, the analysis identifies 
 
 #### Methodology
 
-#### Step 1: Zoning Filter  
-Zoning polygons were filtered to include **commercial and industrial categories only**, forming the initial constraint layer for the analysis.
+#### Step 1: Zoning Filter
+Zoning polygons were obtained from the **City of Los Angeles Open Data Portal** via the **Socrata API** (`data.lacity.org`).  
+
+- The dataset contains polygons representing all zoning designations in the city.  
+- Using GeoPandas and the Socrata API, we **filtered the dataset to retain only commercial and industrial categories**, forming the initial constraint layer for the analysis.  
 
 <p align="center">
   <img src="figures/LA_commercial_zoning.png" alt="Commercial & Industrial Zoning — Los Angeles" width="500">
 </p>
 
-#### Step 2: Building Footprint Extraction  
-Building footprints were queried from the ArcGIS REST API using bounding boxes and pagination method to handle the large dataset. 
-The first bounding box encompasses the area of DTLA, where we extract all building footprints intersecting this box.
+#### Step 2: Building footprints. Test Extraction — DTLA Bounding Box  
+Building footprints were queried from the **ArcGIS REST API** using a single, user-defined bounding box covering Downtown Los Angeles (DTLA). Footprints were retrieved using the API’s pagination method to handle large feature counts.
 <p align="center">
   <img src="figures/LA_bldg_full_test_bbox.png" alt="DTLA Building Footprints" width="500">
-</p>
-Next, extract data interseting bounding boxes for San Fernando Valley and Long Beach areas.   
-
-#### Step 3: Spatial Intersection  
-Building footprints were **spatially intersected with commercial/industrial zoning polygons**, retaining only buildings located within these zones.
+</p> 
+ 
+Extracted footprints were **filtered by area size** and **spatially intersected with commercial/industrial zoning polygons**, retaining only buildings with area >= 10,000 sq ft and located within these zones.
 
 <p align="center">
   <img src="figures/large_comm_ind_LA_bldg_full_test_bbox.png" alt="DTLA Industrial/Commercial Building Footprints" width="500">
 </p>
 
-#### Step 4: Size Threshold Filtering  
-To approximate rooftop solar feasibility, buildings were filtered by footprint area:
-
-- **Minimum area:** 10,000 square feet  
-- Equivalent to approximately **929 m²**
-
----
-
-#### Results
-
+For this test case, the results are:
 - **Total commercial/industrial buildings identified:** 5,913  
-- **Buildings ≥ 10,000 sq ft:** 4,241  
+- **Buildings ≥ 10,000 sq ft:** 4,241 
 
-The resulting dataset represents **large commercial and industrial structures** that meet both zoning and size criteria, making them strong candidates for further solar suitability analysis.
+#### Step 3: Automated Full Extraction  
+We define our study area as the minimal bounding box of the union of all commercial/industrial zoning data polygons. To extract the data from ArcGIS API for the entire study area, an automated tiling approach was implemented:
+- The study area was divided into **10 km × 10 km tiles**.
+  <p align="center">
+  <img src="figures/la_tiling_grid.png" alt="10 sq k tiling — Los Angeles" width="500">
+  </p> 
+- Each tile was queried via the **ArcGIS REST API** using **size threshold filtering directly on the server** (footprints ≥ 10,000 sq ft / ~929 m²).  
+- **Pagination** ensured that all features per tile were retrieved.  
+- Extracted footprints were then **spatially joined with the zoning layer** to retain only buildings located within commercial/industrial zones.
 
----
+**Results from the full tiling extraction:**
+
+- **Total footprints retrieved from API (all tiles):** 717,604  
+- **After spatial join with zoning:** 58,922 buildings  
+- **Minimum area considered:** 10,000 sq ft (~929 m²)
 
 #### Coordinate Reference Systems
 
@@ -97,24 +100,10 @@ The resulting dataset represents **large commercial and industrial structures** 
 
 Data were stored in **GeoPackage format** to preserve geometry fidelity and CRS information.
 
----
-
-#### Outputs
-
-- `LA_commercial_industrial_zoning_4326.gpkg`  
-- `large_buildings_comm_industrial_full_test_bbox.gpkg`  
-
-These files can be directly loaded into:
-- QGIS  
-- ArcGIS Pro  
-- GeoPandas workflows  
-
----
-
 ##### Next Steps
+- **Extend the analysis to other cities** where detailed building footprint datasets may be limited or unavailable.  
+- Explore **raster-based approaches** to identify building footprints, such as:  
+  - **Object detection** on high-resolution aerial imagery or satellite data.  
+  - Using indices similar to NDVI, such as the **Normalized Difference Built-up Index (NDBI)**, to detect rooftops or impervious surfaces suitable for solar potential estimation.
+- Incorporate additional environmental or structural information, such as **sun exposure, rooftop shape, or slope**, to refine rooftop solar suitability, if such data is available.
 
-- Estimate rooftop solar potential using area and orientation  
-- Integrate solar irradiance or LiDAR data  
-- Produce neighborhood-level solar suitability maps  
-
----
